@@ -7,13 +7,15 @@ typedef enum
     GARDIEN,
     DEFENSEUR,
     MILIEU,
-    ATTAQUANT
+    ATTAQUANT,
+    POSTE_INCONNU
 } Poste;
 
 typedef enum
 {
     TITULAIRE,
-    REMPLACANT
+    REMPLACANT,
+    STATUT_INCONNU
 } Statut;
 
 typedef struct
@@ -24,8 +26,8 @@ typedef struct
 typedef struct
 {
     int id;
-    char *nom;
-    char *prenom;
+    char nom[50];
+    char prenom[50];
     int numeroMaillot;
     Poste poste;
     int age;
@@ -33,6 +35,9 @@ typedef struct
     Date dateInscription;
     Statut statut;
 } Joueur;
+
+int RechercherNom(Joueur *j, int n, char *nom, int *ind);
+int RechercherId(Joueur *j, int n, int id, int *ind);
 
 // Supprimer le '\n'
 void suppRetour(char *c)
@@ -54,113 +59,110 @@ void AjouterDate(Date *dt)
     scanf("%d", &dt->annee);
 }
 
-int nextId(void)
+void initNextId(int maxId)
 {
-    static int id = 1;
-    return id++;
+    static int id = 0;
+    id = maxId;
 }
 
-void TestePoste(Joueur *j, char *buf)
+int nextId()
 {
-    int t = strlen(buf);
+    static int id = 0;
+    return ++id;
+}
+
+Poste TestePoste(char *buf)
+{
     if (strcmp(buf, "GARDIEN") == 0)
     {
-        j->poste = GARDIEN;
+        return GARDIEN;
     }
     else if (strcmp(buf, "DEFENSEUR") == 0)
     {
-        j->poste = DEFENSEUR;
+        return DEFENSEUR;
     }
     else if (strcmp(buf, "MILIEU") == 0)
     {
-        j->poste = MILIEU;
+        return MILIEU;
     }
     else if (strcmp(buf, "ATTAQUANT") == 0)
     {
-        j->poste = ATTAQUANT;
+        return ATTAQUANT;
     }
     else
     {
-        printf("Erreur poste !!!\n");
+        return POSTE_INCONNU;
     }
 }
 
-void TesteStatut(Joueur *j, char *buf)
+Statut TesteStatut(char *buf)
 {
-    int t = strlen(buf);
     if (strcmp(buf, "TITULAIRE") == 0)
     {
-        j->statut = TITULAIRE;
+        return TITULAIRE;
     }
     else if (strcmp(buf, "REMPLACANT") == 0)
     {
-        j->statut = REMPLACANT;
+        return REMPLACANT;
     }
     else
     {
-        printf("Erreur statut !!!\n");
+        return STATUT_INCONNU;
     }
 }
 
+// max id
+int MaxId(Joueur *j, int n)
+{
+    int max = 0;
+    for (int i = 0; i < n; i++)
+    {
+        if (j[i].id > max)
+            max = j[i].id;
+    }
+    return max;
+}
+
+// Ajouter un seul joueur
 void AjouterJou(Joueur *j)
 {
-    int m, n, t, ts;
-    char *p, *s;
-
-    printf("Entrez le nombre des caractere d'un nom: ");
-    scanf("%d", &m);
-    printf("Entrez le nombre des caractere d'un prenom: ");
-    scanf("%d", &n);
-    getchar();
-
-    j->nom = malloc((m + 1) * sizeof(char));
-    j->prenom = malloc((n + 1) * sizeof(char));
+    char p[15], s[15];
     j->id = nextId();
-
     printf("Entrez le nom: ");
-    fgets(j->nom, m + 1, stdin);
+    fgets(j->nom, 50, stdin);
     suppRetour(j->nom);
+    getchar();
 
     printf("Entrez le prenom: ");
-    fgets(j->prenom, n + 1, stdin);
+    fgets(j->prenom, 50, stdin);
     suppRetour(j->prenom);
-
-    printf("Entrez le numero Maillot : ");
-    scanf("%d", &j->numeroMaillot);
-    // getchar();
-
-    printf("Entrez le nombre des caractere d'un poste: ");
-    scanf("%d", &t);
     getchar();
 
-    p = malloc((t + 1) * sizeof(char));
-    printf("Entrez le poste (GARDIEN, DEFENSEUR, MILIEU, ATTAQUANT): ");
-    fgets(p, t + 1, stdin);
-    suppRetour(p);
-    TestePoste(j, p);
+    printf("Entrez le numero Maillot : ");
+    scanf(" %d", &j->numeroMaillot);
+    //getchar();
 
+    printf("Entrez le poste (GARDIEN, DEFENSEUR, MILIEU, ATTAQUANT): ");
+    fgets(p, 15, stdin);
+    suppRetour(p);
+    j->poste = TestePoste(p);
+    getchar();
     printf("Entrez l'age: ");
     scanf("%d", &j->age);
 
-    printf("Entrez le nombre de buts marqués par le joueur:");
+    printf("Entrez le nombre de buts marques par le joueur:");
     scanf("%d", &j->buts);
 
     AjouterDate(&j->dateInscription);
-
-    printf("Entrez le nombre des caractere d'un statut: ");
-    scanf("%d", &ts);
     getchar();
 
-    s = malloc((ts + 1) * sizeof(char));
     printf("Entrez le statut d'un joueur (TITULAIRE, REMPLACANT): ");
-    fgets(s, ts + 1, stdin);
+    fgets(s, 15, stdin);
     suppRetour(s);
-    TesteStatut(j, s);
-
-    free(p);
-    free(s);
+    j->statut = TesteStatut(s);
 }
 
+// ajouter pleusieur joueur
 void Ajouter(Joueur *J, int n)
 {
     int i;
@@ -168,6 +170,23 @@ void Ajouter(Joueur *J, int n)
     {
         printf("Joueur[%d]= ", i + 1);
         AjouterJou(&J[i]);
+    }
+}
+
+// Ajouter dans tableau
+void AjouteTabJ(Joueur **j, int *n)
+{
+    int i;
+    Joueur *tmp = realloc(*j, (*n + 1) * sizeof(Joueur));
+    if (tmp == NULL)
+    {
+        printf("Erreur allocation!\n");
+        return;
+    }
+    else
+    {
+        *j = tmp;
+        AjouterJou(&(*j)[(*n)++]);
     }
 }
 
@@ -228,7 +247,7 @@ const char *ConvPoste(Poste p)
     case ATTAQUANT:
         return "ATTAQUANT";
     default:
-        return "INCONNU";
+        return "POSTE_INCONNU";
     }
 }
 
@@ -242,13 +261,14 @@ const char *ConvStatut(Statut s)
     case REMPLACANT:
         return "REMPLACANT";
     default:
-        return "INCONNU";
+        return "STATUT_INCONNU";
     }
 }
 
 // Afficher un joueur
 void AfficherJoueur(Joueur *j)
 {
+    printf("ID: %d\n", j->id);
     printf("Nom: %s\n", j->nom);
     printf("Prenom: %s\n", j->prenom);
     printf("Numero Maillot: %d\n", j->numeroMaillot);
@@ -261,6 +281,58 @@ void AfficherJoueur(Joueur *j)
     if (j->buts >= 10)
     {
         printf("Star de l'equipe!\n");
+    }
+}
+
+// nombre des lignes dans un fichier
+int compterLignes(FILE *f)
+{
+    int lignes = 0;
+    char c;
+    fseek(f, 0, SEEK_SET);
+    while ((c = fgetc(f)) != EOF)
+    {
+        if (c == '\n')
+        {
+            lignes++;
+        }
+    }
+    fseek(f, 0, SEEK_SET);
+    return lignes;
+}
+
+// lire les donnez sur fichier et stock dans un tableau
+Joueur *lireFichier(FILE *f, int *n)
+{
+    int lignes = compterLignes(f);
+    *n = lignes;
+    Joueur *j = malloc((*n) * sizeof(Joueur));
+    char ligne[200];
+    for (int i = 0; i < *n; i++)
+    {
+        if (fgets(ligne, sizeof(ligne), f) != NULL)
+        {
+            char posteStr[15], statutStr[15];
+            char nomTmp[50], prenomTmp[50];
+            int jJour, jMois, jAnnee;
+            sscanf(ligne, "%d %s %s %d %s %d %d %d-%d-%d %s", &j[i].id, nomTmp, prenomTmp, &j[i].numeroMaillot, posteStr, &j[i].age, &j[i].buts, &jJour, &jMois, &jAnnee, statutStr);
+            strcpy(j[i].nom, nomTmp);
+            strcpy(j[i].prenom, prenomTmp);
+            j[i].poste = TestePoste(posteStr);
+            j[i].statut = TesteStatut(statutStr);
+            j[i].dateInscription.jour = jJour;
+            j[i].dateInscription.mois = jMois;
+            j[i].dateInscription.annee = jAnnee;
+        }
+    }
+    return j;
+}
+
+//Affiche tableau
+void Afficher(Joueur *j, int n){
+    int i;
+    for(i=0;i<n;i++){
+        AfficherJoueur(&j[i]);
     }
 }
 
@@ -280,37 +352,34 @@ void AfficherPoste(Joueur *j, int n, Poste p)
 
 void AfficherMenu(Joueur *j, int n)
 {
-    char *p;
-    int t;
+    char p[15];
+    Poste t;
     int choix;
     do
     {
         printf("\n===========Menu=============");
-        printf("\n1. Trier les joueurs par ordre alphabétique (Nom)");
-        printf("\n2. Trier les joueurs par âge");
+        printf("\n1. Trier les joueurs par ordre alphabetique (Nom)");
+        printf("\n2. Trier les joueurs par age");
         printf("\n3. Afficher les joueurs par poste");
-        printf("votre choix (0 pour arrete):");
+        printf("\nvotre choix (0 pour arrete):");
         scanf("%d", &choix);
+        getchar();
         switch (choix)
         {
         case 1:
             TrieAlphabet(j, n);
+            Afficher(j,n);
             break;
         case 2:
             TrieAge(j, n);
+            Afficher(j,n);
             break;
         case 3:
-            printf("Entrez le nombre des caractere d'un poste: ");
-            scanf("%d", &t);
-            getchar();
-
-            p = malloc((t + 1) * sizeof(char));
             printf("Entrez le poste a rechercher: ");
-            fgets(p, t + 1, stdin);
+            fgets(p, 15, stdin);
             suppRetour(p);
-            TestePoste(j, p);
-            // ERREUR ICI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            AfficherPoste(j, n, p);
+            t = TestePoste(p);
+            AfficherPoste(j, n, t);
             break;
         default:
             printf("choix invalide");
@@ -325,6 +394,7 @@ void ModifierPoste(Joueur *j, int n, char *nom, Poste p)
     if (RechercherNom(j, n, nom, &i) == 1)
     {
         j[i].poste = p;
+        AfficherJoueur(&j[i]);
     }
     else
     {
@@ -333,12 +403,14 @@ void ModifierPoste(Joueur *j, int n, char *nom, Poste p)
 }
 
 // Modifier l'âge d'un joueur.
+//Erreur ici !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void ModifierAge(Joueur *j, int n, char *nom, int age)
 {
     int i;
     if (RechercherNom(j, n, nom, &i) == 1)
     {
         j[i].age = age;
+        AfficherJoueur(&j[i]);
     }
     else
     {
@@ -353,6 +425,7 @@ void ModifierButsMarque(Joueur *j, int n, char *nom, int butsM)
     if (RechercherNom(j, n, nom, &i) == 1)
     {
         j[i].buts = butsM;
+        AfficherJoueur(&j[i]);
     }
     else
     {
@@ -362,59 +435,48 @@ void ModifierButsMarque(Joueur *j, int n, char *nom, int butsM)
 
 void ModifierMenu(Joueur *j, int n)
 {
-    Poste p;
-    char *nom;
-    int size;
-    int age;
-    int butsM;
-    int choix;
+    char p[15];
+    char nom[50];
+    Poste t;
+    int age, butsM, choix;
     do
     {
         printf("\n===========Menu=============");
         printf("\n1. Modifier le poste d'un joueur");
-        printf("\n2. Modifier l'âge d'un joueur");
-        printf("\n3. Modifier le nombre de buts marqués par un joueur");
-        printf("votre choix (0 pour arrete):");
+        printf("\n2. Modifier l'age d'un joueur");
+        printf("\n3. Modifier le nombre de buts marques par un joueur");
+        printf("\nvotre choix (0 pour arrete):");
         scanf("%d", &choix);
+        getchar();
         switch (choix)
         {
         case 1:
-            printf("Entrez le nombre des caractere de nom a rechercher:");
-            scanf("%d", &size);
-            getchar();
-
-            nom = malloc((size + 1) * sizeof(char));
-
             printf("Entrez le nom a rechercher:");
-            fgets(nom, (size + 1), stdin);
-            getchar();
-            // ERREUR ICI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            fgets(nom, 50, stdin);
+            suppRetour(nom);
+
             printf("Entrez la nouvelle poste:");
-            fgets(p, sizeof(p), stdin);
-            ModifierPoste(j, n, nom, p);
+            fgets(p, 15, stdin);
+            suppRetour(p);
+            t = TestePoste(p);
+            ModifierPoste(j, n, nom, t);
             break;
         case 2:
-            printf("Entrez le nombre des caractere de nom a rechercher:");
-            scanf("%d", &size);
-            getchar();
-            nom = malloc((size + 1) * sizeof(char));
             printf("Entrez le nom a rechercher:");
-            fgets(nom, (size + 1), stdin);
-            // getchar();
+            fgets(nom, 50, stdin);
+            suppRetour(nom);
             printf("Entrez la nouvelle age:");
             scanf("%d", &age);
+            getchar();
             ModifierAge(j, n, nom, age);
             break;
         case 3:
-            printf("Entrez le nombre des caractere de nom a rechercher:");
-            scanf("%d", &size);
-            getchar();
-            nom = malloc((size + 1) * sizeof(char));
             printf("Entrez le nom a rechercher:");
-            fgets(nom, (size + 1), stdin);
-            // getchar();
+            fgets(nom, 50, stdin);
+            suppRetour(nom);
             printf("Entrez la nouvelle buts marque:");
             scanf("%d", &butsM);
+            getchar();
             ModifierButsMarque(j, n, nom, butsM);
             break;
         default:
@@ -455,22 +517,44 @@ int RechercherNom(Joueur *j, int n, char *nom, int *ind)
 
 void RechercherMenu(Joueur *j, int n)
 {
-    int indice;
+    int indice = 0;
+    int id;
+    char nom[50];
     int choix;
     do
     {
         printf("\n===========Menu=============");
         printf("\n1. Rechercher un joueur par Identifiant");
         printf("\n2. Rechercher un joueur par Nom");
-        printf("votre choix (0 pour arrete):");
+        printf("\nvotre choix (0 pour arrete):");
         scanf("%d", &choix);
+        getchar();
         switch (choix)
         {
         case 1:
-            // RechercherId();
+            printf("Entrez l'id a rechercher:");
+            scanf("%d", &id);
+            if (RechercherId(j, n, id, &indice))
+            {
+                AfficherJoueur(&j[indice]);
+            }
+            else
+            {
+                printf("Aucun joueur!!!\n");
+            }
             break;
         case 2:
-            // RechercherNom();
+            printf("Entrez le nom a rechercher:");
+            fgets(nom, 50, stdin);
+            suppRetour(nom);
+            if (RechercherNom(j, n, nom, &indice))
+            {
+                AfficherJoueur(&j[indice]);
+            }
+            else
+            {
+                printf("Aucun joueur!!!\n");
+            }
             break;
         default:
             printf("choix invalide");
@@ -480,16 +564,7 @@ void RechercherMenu(Joueur *j, int n)
 
 void SauvgardeInfoJoueur(FILE *f, Joueur *j)
 {
-    fprintf(f, "ID: %d\n", j->id);
-    fprintf(f, "Nom: %s\n", j->nom);
-    fprintf(f, "Prenom: %s\n", j->prenom);
-    fprintf(f, "Numero Maillot: %d\n", j->numeroMaillot);
-    fprintf(f, "Statut: %s\n", ConvStatut(j->statut));
-    fprintf(f, "Poste: %s\n", ConvPoste(j->poste));
-    fprintf(f, "Age: %d\n", j->age);
-    fprintf(f, "Nombre De Buts Marqués: %d\n", j->buts);
-    fprintf(f, "Date Inscription: %d-%d-%d\n", j->dateInscription.jour, j->dateInscription.mois, j->dateInscription.annee);
-    fprintf(f, "Statut: %s\n", ConvStatut(j->statut));
+    fprintf(f, "%d %s %s %d %s %d %d %02d-%02d-%04d %s", j->id, j->nom, j->prenom, j->numeroMaillot, ConvPoste(j->poste), j->age, j->buts, j->dateInscription.jour, j->dateInscription.mois, j->dateInscription.annee, ConvStatut(j->statut));
 }
 
 void SauvgardeFichier(FILE *f, Joueur *j, int n)
@@ -497,44 +572,41 @@ void SauvgardeFichier(FILE *f, Joueur *j, int n)
     int i;
     for (i = 0; i < n; i++)
     {
-        fprintf(f, "Joueur[%d]=\n", i + 1);
+        if (i > 0){
+            fprintf(f, "\n");
+        }
         SauvgardeInfoJoueur(f, &j[i]);
     }
 }
 
 // Supprimer un joueur par identifiant
+//Erreur il est supprimer sur tab mais pas le fichier
 void suppId(Joueur **j, int *n, int id)
-{ // ERREUR ICI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+{
     int i;
     int indice;
     if (RechercherId(*j, *n, id, &indice) == 1)
     {
-        free((*j)[indice].nom);
-        free((*j)[indice].prenom);
         for (i = indice; i < *n - 1; i++)
         {
             (*j)[i] = (*j)[i + 1];
         }
         (*n)--;
-        *j = realloc(*j, (*n) * sizeof(Joueur));
-        printf("Joueur supprimé!\n");
+        if (*n == 0)
+        {
+            free(*j);
+            *j = NULL;
+        }
+        else
+        {
+            *j = realloc(*j, (*n) * sizeof(Joueur));
+        }
+        printf("Joueur supprime!\n");
     }
     else
     {
-        printf("ID non trouvé!\n");
+        printf("ID non trouve!\n");
     }
-}
-
-// Afficher le nombre total de joueurs dans l'équipe
-void nombreTJoueur(Joueur *j, int n)
-{
-    int i;
-    int count = 0;
-    for (i = 0; i < n; i++)
-    {
-        count++;
-    }
-    printf("le nombre totale de joueurs dans equipe est: %d", count);
 }
 
 // Afficher l'âge moyen des joueurs
@@ -542,17 +614,24 @@ float MoyenAge(Joueur *j, int n)
 {
     int i;
     int sum = 0;
-    for (i = 0; i < n; i++)
+    if (n == 0)
     {
-        sum += j[i].age;
+        return 0;
     }
-    return (float)sum / n;
+    else
+    {
+        for (i = 0; i < n; i++)
+        {
+            sum += j[i].age;
+        }
+        return (float)sum / n;
+    }
 }
 
 void AfficheAgeMoyenne(Joueur *j, int n)
 {
     float m = MoyenAge(j, n);
-    printf("L'age moyen des joueur est: %.2lf\n", m);
+    printf("L'age moyen des joueur est: %.2f\n", m);
 }
 
 // Afficher les joueurs ayant marqué plus de X buts (X introduit par l’utilisateur)
@@ -592,38 +671,45 @@ void AfficheMaxButeur(Joueur *j, int n)
 // Afficher le joueur le plus jeune et le plus âgé
 void AfficherPlusJeunePlusAge(Joueur *j, int n)
 {
-    int minInd = 0, maxInd = 0;
-    for (int i = 1; i < n; i++)
+    Joueur *tmp = malloc(n * sizeof(Joueur));
+    if (tmp == NULL)
     {
-        if (j[i].age < j[minInd].age){
-            minInd = i;
-        }
-        if (j[i].age > j[maxInd].age){
-            maxInd = i;
-        }
+        printf("Erreur allocation!\n");
+        return;
     }
-    printf("Plus jeune:\n");
-    AfficherJoueur(&j[minInd]);
-    printf("Plus âgé:\n");
-    AfficherJoueur(&j[maxInd]);
+    for (int i = 0; i < n; i++)
+    {
+        tmp[i] = j[i];
+    }
+    TrieAge(tmp, n);
+    if (n == 0) {
+        printf("Aucun joueur.\n");
+        return;
+    }else{
+        printf("Plus jeune:\n");
+        AfficherJoueur(&tmp[0]);
+        printf("Plus âgé:\n");
+        AfficherJoueur(&tmp[n - 1]);
+    }
+    free(tmp);
 }
 
 // Statistiques
 void MenuStatistique(Joueur *j, int n)
 {
     int choix;
+    do{
     printf("==========Menu=============\n");
-    printf("1. Afficher le nombre total de joueurs dans l'équipe\n");
-    printf("2. Afficher l'âge moyen des joueurs\n");
+    printf("1. Afficher le nombre total de joueurs dans l'equipe\n");
+    printf("2. Afficher l'age moyen des joueurs\n");
     printf("3. Afficher les joueurs ayant marqué plus de X buts\n");
     printf("4. Afficher le meilleur buteur (joueur avec le maximum de buts)\n");
-    printf("5. Afficher le joueur le plus jeune et le plus âgé\n");
-    printf("votre choix: ");
+    printf("5. Afficher le joueur le plus jeune et le plus age\n");
+    printf("votre choix (0 pour arrete): ");
     scanf("%d", &choix);
     switch (choix)
     {
     case 1:
-        // nombreTJoueur(j, n);
         printf("Total joueurs: %d\n", n);
         break;
     case 2:
@@ -641,6 +727,7 @@ void MenuStatistique(Joueur *j, int n)
     default:
         printf("Choix invalide");
     }
+}while(choix!=0);
 }
 
 int main()
@@ -648,17 +735,17 @@ int main()
     FILE *f;
     int n;
     Joueur *j;
+    int id;
     int choix;
-    f = fopen("Data.txt", "w+");
+    f = fopen("Data.txt", "r+");
     if (f == NULL)
     {
         printf("Erreur d'ouverture fichier!!! \n");
         return 1;
     }
-    printf("Entrez le nombre des joueur a ajouter: ");
-    scanf("%d", &n);
-    j = malloc(n * sizeof(Joueur));
-    Ajouter(j, n);
+    j = lireFichier(f, &n);
+    int maxId = MaxId(j, n);
+    initNextId(maxId);
     do
     {
         printf("\n===== Menu Principal =====\n");
@@ -668,26 +755,39 @@ int main()
         printf("4. Supprimer un joueur\n");
         printf("5. Rechercher un joueur\n");
         printf("6. Statistiques\n");
-        printf("0. Quitter\n");
+        printf("7. Quitter\n");
         printf("votre choix:");
         scanf("%d", &choix);
         switch (choix)
         {
         case 1:
+            AjouteTabJ(&j, &n);
+            SauvgardeFichier(f, j, n);
             break;
         case 2:
+            AfficherMenu(j, n);
             break;
         case 3:
+            ModifierMenu(j, n);
+            SauvgardeFichier(f, j, n);
             break;
         case 4:
+            printf("Entrez l'id a suppremer:");
+            scanf("%d", &id);
+            suppId(&j, &n, id);
+            SauvgardeFichier(f, j, n);
             break;
         case 5:
+            RechercherMenu(j, n);
             break;
         case 6:
+            MenuStatistique(j, n);
             break;
         case 7:
+            exit(0);
             break;
         default:
+            printf("choix invalide");
         }
     } while (choix != 0);
 
