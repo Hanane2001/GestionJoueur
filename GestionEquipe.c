@@ -361,6 +361,7 @@ void AfficherMenu(Joueur *j, int n)
         printf("\n1. Trier les joueurs par ordre alphabetique (Nom)");
         printf("\n2. Trier les joueurs par age");
         printf("\n3. Afficher les joueurs par poste");
+        printf("\n4. Quitter");
         printf("\nvotre choix (0 pour arrete):");
         scanf("%d", &choix);
         getchar();
@@ -380,6 +381,9 @@ void AfficherMenu(Joueur *j, int n)
             suppRetour(p);
             t = TestePoste(p);
             AfficherPoste(j, n, t);
+            break;
+        case 4:
+            exit(0);
             break;
         default:
             printf("choix invalide");
@@ -445,6 +449,7 @@ void ModifierMenu(Joueur *j, int n)
         printf("\n1. Modifier le poste d'un joueur");
         printf("\n2. Modifier l'age d'un joueur");
         printf("\n3. Modifier le nombre de buts marques par un joueur");
+        printf("\n4. Quitter");
         printf("\nvotre choix (0 pour arrete):");
         scanf("%d", &choix);
         getchar();
@@ -478,6 +483,9 @@ void ModifierMenu(Joueur *j, int n)
             scanf("%d", &butsM);
             getchar();
             ModifierButsMarque(j, n, nom, butsM);
+            break;
+        case 4:
+            exit(0);
             break;
         default:
             printf("choix invalide");
@@ -526,6 +534,7 @@ void RechercherMenu(Joueur *j, int n)
         printf("\n===========Menu=============");
         printf("\n1. Rechercher un joueur par Identifiant");
         printf("\n2. Rechercher un joueur par Nom");
+        printf("\n3. Quitter");
         printf("\nvotre choix (0 pour arrete):");
         scanf("%d", &choix);
         getchar();
@@ -555,6 +564,9 @@ void RechercherMenu(Joueur *j, int n)
             {
                 printf("Aucun joueur!!!\n");
             }
+            break;
+        case 3:
+            exit(0);
             break;
         default:
             printf("choix invalide");
@@ -705,6 +717,7 @@ void MenuStatistique(Joueur *j, int n)
     printf("3. Afficher les joueurs ayant marqué plus de X buts\n");
     printf("4. Afficher le meilleur buteur (joueur avec le maximum de buts)\n");
     printf("5. Afficher le joueur le plus jeune et le plus age\n");
+    printf("6. Quitter\n");
     printf("votre choix (0 pour arrete): ");
     scanf("%d", &choix);
     switch (choix)
@@ -723,6 +736,9 @@ void MenuStatistique(Joueur *j, int n)
         break;
     case 5:
         AfficherPlusJeunePlusAge(j, n);
+        break;
+    case 6:
+        exit(0);
         break;
     default:
         printf("Choix invalide");
